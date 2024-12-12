@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseFilters, HttpException, HttpStatus } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { diskStorage } from 'multer';
@@ -6,6 +6,9 @@ import { extname } from 'path';
 import * as bcrypt from 'bcrypt'
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
+import { HttpExceptionFilter } from 'src/Exception';
+@UseFilters(HttpExceptionFilter)
+
 @Controller('user')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
@@ -22,7 +25,7 @@ export class UsersController {
     })
   )
   @Post()
-  @Post()
+
 async create(
   @Body() createUserDto: CreateUserDto,
   @UploadedFile() file: Express.Multer.File,
@@ -46,7 +49,7 @@ async create(
     return await this.userService.create(createUserDto, photoPath);
   } catch (error) {
     console.error('Error creating user:', error);
-    throw error;
+    throw new HttpException('Unauthorized access', HttpStatus.UNAUTHORIZED);
   }
 }
 
