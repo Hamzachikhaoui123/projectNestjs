@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseFilters, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseFilters, HttpException, HttpStatus, Res, BadRequestException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { diskStorage } from 'multer';
@@ -7,11 +7,13 @@ import * as bcrypt from 'bcrypt'
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { HttpExceptionFilter } from 'src/Exception';
+import { Response } from 'express';
+import { JwtService } from '@nestjs/jwt';
 @UseFilters(HttpExceptionFilter)
 
 @Controller('user')
 export class UsersController {
-  constructor(private readonly userService: UsersService) {}
+  constructor(private jwtService:JwtService,private readonly userService: UsersService) {}
   @UseInterceptors(
     FileInterceptor('photo',{
       storage:diskStorage({
@@ -59,6 +61,36 @@ async create(
   findAll() {
     return this.userService.findAll();
   }
+
+  @Post('login')
+  @Post('login')
+    async login(@Body() createUserdto:CreateUserDto,
+    
+    @Res({passthrough:true})reponse:Response
+    ){
+        
+        const user=await this.userService.findByEmail(createUserdto.email);
+        
+        if(!user){
+
+            throw new BadRequestException('user is not found')
+            
+        }
+        if(!await bcrypt.compare(createUserdto.password as string,user.password)){
+            
+            throw new BadRequestException('Invalid redentilas')
+        }
+        
+        const jwt= await this.jwtService.signAsync({id:user.id})
+        
+        reponse.cookie('jwt',jwt,{httpOnly:true})
+      
+        return {
+            message:'success',
+            user:user,
+            access_token:jwt
+        };
+    }
 
   @Get(':id')
   findOne(@Param('id') id: string) {

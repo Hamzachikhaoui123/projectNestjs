@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { join } from 'path';
 import { unlinkSync } from 'fs';
+import { use } from 'passport';
 
 @Injectable()
 export class UsersService {
@@ -51,4 +52,10 @@ async  create(createUserDto: CreateUserDto,profilePhoto: string):Promise<User> {
     }
     await  this.userRepository.delete(id);
   }
+
+ async findByEmail(email:any):Promise<User|undefined>{
+  const user = await this.userRepository.findOneBy({email});
+
+  return user;
+ }
 }
